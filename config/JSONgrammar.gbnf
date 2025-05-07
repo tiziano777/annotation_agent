@@ -1,0 +1,15 @@
+root ::= "{" entities "}"
+
+entities ::= entity ("," entity)* 
+
+entity ::= "\"" name "\"" ":" value
+
+name ::= [a-z]+
+
+value ::= string | array
+
+string ::= "\"" text "\""
+
+array ::= "[" string "," string ("," string)* "]"  
+
+text ::= [^"]+
