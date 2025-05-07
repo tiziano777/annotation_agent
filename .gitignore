@@ -1,4 +1,3 @@
-data/raw_data/
-data/annotated_data/
-log/
 config/gemini2.0-flash.yml
+data/
+log/
