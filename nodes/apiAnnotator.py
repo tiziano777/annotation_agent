@@ -104,10 +104,15 @@ class Annotator:
         Estrae un JSON valido da una stringa di output. Usa json_repair per tolleranza agli errori.
         """
         try:
-            json_match = re.search(r"\{.*\}", text.strip(), re.DOTALL)
-            json_text = json_match.group(0)
-            repaired_json = repair_json(json_text)
-            return json.loads(repaired_json)
+            json_text = repair_json(json_text)
+            json_match = re.search(r"\{.*?\}", json_text, re.DOTALL)
+            if json_match is None:
+                print(f"Nessun JSON trovato nel testo:\n\n{json_text}")
+                return {}
+            repaired_json = repair_json(json_match.group(0))
+            parsed_json = json.loads(repaired_json)    
+            
+            return parsed_json
 
         except Exception as e:
             print(f"Errore nel parsing JSON:\n→ Testo:\n{text}\n→ Errore: {e}")

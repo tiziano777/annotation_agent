@@ -8,9 +8,11 @@ from pipelines.api_pipeline import run_pipeline
 # from pipelines.cpp_pipeline import run_pipeline 
 
 # CONFIG
-INPUT_PATH = '/home/tiziano/GDELT_scraping/src/EDA/articles.jsonl'
-OUTPUT_PATH = '/home/tiziano/GDELT_scraping/annotated_data/annotated_articles.jsonl'
-CHECKPOINT_PATH = '/home/tiziano/GDELT_scraping/annotated_data/checkpoint_articles.json'
+TOPIC = "election"
+INPUT_PATH = f'./data/raw/{TOPIC}_articles_deduplicated.jsonl'
+OUTPUT_PATH = f'./data/output/{TOPIC}_articles_annotated.jsonl'
+CHECKPOINT_PATH = f'./data/checkpoint/{TOPIC}_checkpoint.json'
+
 PROMPTS_PATH = './config/prompts.yml'
 MODEL_CONFIG = "./config/gemini2.0-flash.yml"
 
