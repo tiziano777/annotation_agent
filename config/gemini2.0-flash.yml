@@ -1,8 +1,0 @@
-
-model_name: gemini-2.0-flash
-daily_cost_threshold: 10.0
-n_ctx: 800
-temperature: 0.7
-top_p: 0.9
-top_k: 40
-max_output_tokens: 1250
