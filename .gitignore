@@ -1,4 +1,4 @@
 data/raw_data/
 data/annotated_data/
 log/
-/home/tiziano/annotation_agent/config/gemini2.0-flash.yml
+config/gemini2.0-flash.yml
