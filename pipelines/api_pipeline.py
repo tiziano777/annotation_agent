@@ -25,8 +25,8 @@ def create_pipeline(annotator, output_correction, span_format, writer):
     return workflow.compile()
 
 
-def run_pipeline(input_path, output_path, checkpoint_path, api_llm, prompts, llm_config):
-    annotator = Annotator(llm=api_llm, prompts=prompts, input_context=llm_config['n_ctx'])
+def run_pipeline(input_path, output_path, checkpoint_path,topic, api_llm, prompts, llm_config):
+    annotator = Annotator(llm=api_llm, prompts=prompts,topic=topic, input_context=llm_config['n_ctx'])
     correction = OutputCorrection(similarity_threshold=79)
     span_format = SpanFormat()
     writer = StreamWriter(output_file=output_path)

@@ -1,0 +1,11 @@
+[SCENARIO]
+Describes the setting, audience, or usage assumptions.
+
+[INSTRUCTIONS]
+Step-by-step directive to the model, using CoD compression and spectrum constraints.
+
+[RESPONSE FORMAT]
+Defines strict expected output, possibly with tag/JSON structure.
+
+[EXAMPLES]
+Few-shot examples, minimal in tokens, spectrum-aware.

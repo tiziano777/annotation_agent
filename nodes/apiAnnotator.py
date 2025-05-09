@@ -18,7 +18,7 @@ class Annotator:
     Nodo LangGraph compatibile con modelli LLM API-based (es. Gemini via LangChain).
     """
 
-    def __init__(self, llm, input_context, prompts=None):
+    def __init__(self, llm, input_context,topic=None, prompts=None):
         """
         :param llm: Modello LangChain-compatible (es. ChatGoogleGenerativeAI).
         :param input_context: Numero massimo di token di contesto.
@@ -26,6 +26,7 @@ class Annotator:
         """
         self.llm = llm
         self.system_prompts = prompts
+        self.topic = topic
         self.input_context = input_context
         self.logger = GeminiCostLogger()  # Istanza per logging dei token e costi
         self.end_prompt = "\n Output JSON Syntax: \n"
@@ -60,7 +61,7 @@ class Annotator:
             print(f"Errore nel clickbait parsing: {e}")
         
         # Segment-level annotation
-        annotation_prompts = self.system_prompts.get('annotation_prompts', {})
+        annotation_prompts = self.system_prompts.get(self.topic, 'general_annotation_prompts')
         for s in sentences:
             cumulative_annotations = []
             if s.strip():
@@ -99,7 +100,7 @@ class Annotator:
 
     
     
-    def extract_json(self, text: str) -> dict:
+    def extract_json(self, json_text: str) -> dict:
         """
         Estrae un JSON valido da una stringa di output. Usa json_repair per tolleranza agli errori.
         """
@@ -115,7 +116,7 @@ class Annotator:
             return parsed_json
 
         except Exception as e:
-            print(f"Errore nel parsing JSON:\n→ Testo:\n{text}\n→ Errore: {e}")
+            print(f"Errore nel parsing JSON:\n→ Testo:\n{json_text}\n→ Errore: {e}")
             return {}
 
     def process_text(self, lang: str, text: str) -> List[str]:

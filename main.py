@@ -8,6 +8,7 @@ from pipelines.api_pipeline import run_pipeline
 # from pipelines.cpp_pipeline import run_pipeline 
 
 # CONFIG
+#TOPIC = "vax"
 TOPIC = "election"
 INPUT_PATH = f'./data/raw/{TOPIC}_articles_deduplicated.jsonl'
 OUTPUT_PATH = f'./data/output/{TOPIC}_articles_annotated.jsonl'
@@ -43,7 +44,7 @@ def main():
             json.dump({"checkpoint": 0}, f, ensure_ascii=False, indent=4)
 
     try:
-        run_pipeline(INPUT_PATH, OUTPUT_PATH, CHECKPOINT_PATH, llm, prompts, llm_config)
+        run_pipeline(INPUT_PATH, OUTPUT_PATH, CHECKPOINT_PATH,TOPIC, llm, prompts, llm_config)
         #run_pipeline(INPUT_PATH, OUTPUT_PATH, CHECKPOINT_PATH, llm_config, prompts)
         
         os.remove(CHECKPOINT_PATH)

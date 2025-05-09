@@ -1,17 +1,18 @@
 [
     {
         "Elezioni politiche": [
-            "emotional_manipulation",
-            "attack_on_opponents",
-            "weak_or_misinterpreted_evidence",
-            "exaggerated_or_outrageous_claims",
             "trolling",
             "discredit",
-            "promises_of_miracles_or_grandiose_claims",
+            "clickbait",
             "polarization",
-            "hate_speech",
-            "offensive_language",
-            "clickbait"
+            "hate_speech","offensive_language",
+            
+            
+            "attack_on_opponents",
+            "promises_of_miracles_or_grandiose_claims",
+            "emotional_manipulation",
+            "weak_or_misinterpreted_evidence",
+            "exaggerated_or_outrageous_claims"
         ]
     },
     {
