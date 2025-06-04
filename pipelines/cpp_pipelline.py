@@ -2,7 +2,7 @@ import os
 import json
 from langchain_community.llms import LlamaCpp
 from langgraph.graph import StateGraph, START, END
-from annotation_agent.states.state import State
+from states.state import State
 from nodes.cppAnnotator import Annotator
 from nodes.OutputCorrection import OutputCorrection
 from nodes.SpanFormat import SpanFormat

@@ -2,15 +2,12 @@ import json
 from datetime import datetime
 import pandas as pd
 
-#tokenizer = T5TokenizerFast.from_pretrained("google/flan-t5-base")
-#import google.generativeai as genai
-
 class GeminiCostAnalyze:
     """
     Classe per il calcolo costi di servizio API.
     """
 
-    def __init__(self,log_file_path: str = "/home/tiziano/GDELT_scraping/annotation_agent/log/token_cost_log.jsonl"):
+    def __init__(self,log_file_path: str = "/home/tiziano/annotation_agent/log/token_cost_log.jsonl"):
         
         self.log_file_path = log_file_path
         

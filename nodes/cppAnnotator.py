@@ -30,7 +30,7 @@ class Annotator:
         self.end_prompt = "\n Output JSON Syntax: \n"
         self.context_padding_length = context_padding_length
 
-        # Tokenizer di Gemma 3B (o 12B)
+        # Tokenizer di Gemma 3
         self.tokenizer = AutoTokenizer.from_pretrained("google/gemma-3-12b-it", trust_remote_code=True)
 
     def annotate(self, state: State):
@@ -46,6 +46,8 @@ class Annotator:
         signals = []
         texts = []
 
+        ### CUSTOM LOGIC ###
+        
         # Elaborazione del titolo per il clickbait
         if state.title:
             clickbait_prompt = self.system_prompts['clickbait_prompt']

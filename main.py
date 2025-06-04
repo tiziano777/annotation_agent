@@ -8,7 +8,6 @@ from pipelines.api_pipeline import run_pipeline
 # from pipelines.cpp_pipeline import run_pipeline 
 
 # CONFIG
-#TOPIC = "vax"
 TOPIC = "election"
 INPUT_PATH = f'./data/raw/{TOPIC}_articles_deduplicated.jsonl'
 OUTPUT_PATH = f'./data/output/{TOPIC}_articles_annotated.jsonl'
@@ -27,7 +26,7 @@ def main():
         llm_config = yaml.safe_load(f)
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-001",
+        model=llm_config["model_name"],
         google_api_key=llm_config["api_key"],
         temperature=llm_config["temperature"],
         max_output_tokens=llm_config["max_output_tokens"],
@@ -44,10 +43,10 @@ def main():
             json.dump({"checkpoint": 0}, f, ensure_ascii=False, indent=4)
 
     try:
-        run_pipeline(INPUT_PATH, OUTPUT_PATH, CHECKPOINT_PATH,TOPIC, llm, prompts, llm_config)
+        run_pipeline(INPUT_PATH, OUTPUT_PATH, CHECKPOINT_PATH, llm, prompts, llm_config)
         #run_pipeline(INPUT_PATH, OUTPUT_PATH, CHECKPOINT_PATH, llm_config, prompts)
         
-        os.remove(CHECKPOINT_PATH)
+        #os.remove(CHECKPOINT_PATH)
         
         #costAnalyzer non richiesto per i modelli locali
         GeminiCostAnalyze().daily_cost_log()

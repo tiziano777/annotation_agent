@@ -4,11 +4,13 @@ pydantic
 typing-extensions
 rapidfuzz
 json_repair
+langgraph
+langchain
+langchain_community
 google-generativeai
 langchain_google_genai
-langgraph
 transformers
 datasets
-langchain_community
+
 #https://python.langchain.com/docs/integrations/llms/llamacpp/
 #https://python.langchain.com/api_reference/google_genai/chat_models/langchain_google_genai.chat_models.ChatGoogleGenerativeAI.html

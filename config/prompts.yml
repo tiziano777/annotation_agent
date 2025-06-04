@@ -1,3 +1,47 @@
+
+gate_prompt: >
+  You are an expert in detecting political misinformation. Given a short text fragment, your task is to assess how likely it is that a trained human annotator would consider it to contain signs of election-related misinformation.
+
+  You must rate the likelihood using this 1–5 star scale:
+  1 = Very low likelihood  
+  2 = Low likelihood  
+  3 = Moderate likelihood  
+  4 = High likelihood  
+  5 = Very high likelihood  
+
+  Consider signs such as:
+  - Unverifiable or misleading claims
+  - Manipulative or emotionally charged framing
+  - Conspiratorial or polarizing narratives
+  - Misrepresentation of election rules, results, or candidates
+
+  Output only the score in strict JSON format:  
+  {"score": <value>}  
+  Decimals like 2.5 or 4.5 are allowed.  
+  Do not include explanations.
+
+  Examples:
+
+  Input:  
+  "The election was rigged. Everyone knows the results were fake."  
+  Output:  
+  {"score": 5}
+
+  Input:  
+  "The national election will take place on November 8th."  
+  Output:  
+  {"score": 1}
+
+  Input:  
+  "Some people claim that mail-in ballots may be less secure, though experts disagree."  
+  Output:  
+  {"score": 3.5}
+
+  Input:  
+  "The voting machines had glitches in some districts, but were later verified."  
+  Output:  
+  {"score": 2.5}
+
 clickbait_prompt: >
   [SCENARIO]
   You are building a dataset for fine-grained clickbait detection, to train models capable of detecting manipulative headlines in journalistic news. Output is compact, structured, and spectrum-aware.
@@ -59,540 +103,174 @@ clickbait_prompt: >
 
   Input text:
 
+election_optimized_strategy:
 
-general_annotation_prompts:
+  delegitimization_prompt: >
+    You are an agent and annotating excerpts from political journalism concerning electoral processes and democratic legitimacy. 
+    Your goal is to extract verbatim textual spans that reflect rhetorical strategies aimed at emotional manipulation, delegitimization of actors or institutions, or political polarization.
+    This task focuses on identifying rhetorical markers of manipulative discourse, as it appears in mainstream journalistic formats (e.g., op-eds, politically charged editorials, partisan press releases, ideologically slanted investigative articles).
+
+    The categories are mutually exclusive: exact textual spans (verbatim quotes) that match the most likely of the following categories:
+
+    Trolling
+    Ironic framing or sarcasm targeting political identity or intention, with the goal of eliciting contempt or ridicule.
+    Intensity levels:
+    - low: light sarcasm, passive provocation  
+    - moderate: explicit mockery, belittling language  
+    - high: ad hominem, aggressive derision  
+
+    Discrediting
+    - Statements that undermine legitimacy or trustworthiness of democratic processes, actors, or institutions, not merely their performance or policies.
+    - Do not include factual criticism or unverifiable speculation unrelated to legitimacy.  
+    - Intensity levels: same as above.
+
+    Polarization
+    - Amplifies identity-based antagonism, division, or essentializes political opponents as existential threats to national or democratic integrity.
+    Intensity levels:
+    - low: polarized tone, tribal framing  
+    - moderate: exaggeration, harsh generalization  
+    - high: incitement, existential threat rhetoric
 
 
-  trolling_prompt: >
-      [SCENARIO]
-      Create a dataset for trolling detection.
-
-      [INSTRUCTIONS]
-      Detect and extract exact expressions from the input text that:
-      - mock, ridicule, provoke, bait, or emotionally manipulate others
-      - aim to elicit emotional reactions or interpersonal conflict
-
-      Each extracted span must be annotated with a semantic intensity level:
-        - "low": light sarcasm, irony, passive provocation
-        - "moderate": explicit provocation, belittling, direct mockery
-        - "high": aggressive derision, ad hominem insults, inflammatory statements
-
-      [RESPONSE FORMAT]
-      - Return a valid JSON object under the key "trolling", where each item is a dictionary:
-        - "span": extracted expression
-        - "intensity": "low" | "moderate" | "high"
-      - Only extract verbatim text spans. Do NOT paraphrase.
-      - Avoid redundancy: group similar expressions and do not repeat them.
-      
-      [EXAMPLES]
-      Example 1:
-      Input text: "È davvero incredibile come tu possa pensare di avere sempre ragione. Ogni volta che parli sembra che nessuno ti stia ascoltando, eppure continui a insistere con le tue idee senza senso!"
-      Output:
-      {
-        "trolling": [
-          { "span": "È davvero incredibile come tu possa pensare di avere sempre ragione", "intensity": "moderate" },
-          { "span": "sembra che nessuno ti stia ascoltando", "intensity": "moderate" },
-          { "span": "continui a insistere con le tue idee senza senso", "intensity": "high" }
-        ]
-      }
-
-      Example 2:
-      Input text: "Haha, you're still talking about that? What a joke!"
-      Output:
-      {
-        "trolling": [
-          { "span": "you're still talking about that?", "intensity": "moderate" },
-          { "span": "What a joke!", "intensity": "high" }
-        ]
-      }
-
-      Example 3:
-      Input text: "Honestly, it's laughable how you think anyone cares about your opinion. You're just a bystander, trying to sound like an expert when you have no idea what you're talking about."
-      Output:
-      {
-        "trolling": [
-          { "span": "it's laughable how you think anyone cares about your opinion", "intensity": "moderate" },
-          { "span": "trying to sound like an expert when you have no idea what you're talking about", "intensity": "high" }
-        ]
-      }
-
-      Example 4:
-      Input text: "You really think that idea is going to work? Honestly, I wouldn't get my hopes up if I were you, but I guess you're just too stubborn to listen."
-      Output:
-      {
-        "trolling": [
-          { "span": "You really think that idea is going to work?", "intensity": "low" },
-          { "span": "I wouldn't get my hopes up if I were you", "intensity": "moderate" },
-          { "span": "you're just too stubborn to listen", "intensity": "high" }
-        ]
-      }
-
-      Example 5:
-      Input text: "The team has been working hard to improve the project, and we're making good progress. We'll need to gather more data to ensure we’re heading in the right direction."
-      Output:
-      {
-        "trolling": []
-      }
-
-      Input text:
-
-  discredit_prompt: >
-      [SCENARIO]
-      Create a dataset for discrediting language detection.
-
-      [INSTRUCTIONS]
-      - Detect and extract exact phrases that discredit political actors, public institutions, experts, or organizations.
-      - These phrases must have the intent or rhetorical effect of undermining trust, credibility, legitimacy, or competence.
-      - First assess whether the phrase attacks credibility, not just opinion.
-      - Then classify according to rhetorical form or pragmatic function.
-
-      - For each detected expression, provide:
-        - the verbatim span from the input
-        - the discredit Intensity, using the following taxonomy:
-            - "low": indirect, hedged, or suggestive discredit (e.g., implication of bias or incompetence)
-            - "moderate": explicit but non-inflammatory attack on trustworthiness or competence
-            - "high": overt, extreme, or inflammatory claims of corruption, manipulation, or bad faith
-
-      [RESPONSE FORMAT]
-      - Each output must be a valid JSON object with a key "discredit" whose value is an array of objects:
-          - "span": string (quoted expression)
-          - "intensity": string ("low", "moderate", or "high")
-
-      - Do NOT paraphrase or generalize. Only label spans exactly as in the input.
-      - DO NOT label:
-          - factual criticisms with empirical support
-          - polite disagreement
-          - unverifiable speculation not aimed at credibility
-
-      [EXAMPLES]
-      Example 1:
-      Input text: "Molto spesso non c'è da fidarsi di quello che dicono i politici. Ogni giorno si recano al lavoro, ma sono solo burattini nelle mani dei grandi interessi economici. Rilasciano interviste giornalmente, ed ogni cosa che dicono è manipolata per i loro scopi."
-      Output:
-      {
-        "discredit": [
-          { "span": "non c'è da fidarsi di quello che dicono i politici", "intensity": "moderate" },
-          { "span": "sono solo burattini nelle mani dei grandi interessi economici", "intensity": "high" },
-          { "span": "ogni cosa che dicono è manipolata per i loro scopi", "intensity": "high" }
-        ]
-      }
-
-      Example 2:
-      Input text: "That so-called expert is just parroting information they've heard. They don't even try to do their own research. It’s surprising how many people still believe what they're saying. But the truth is, they have no real understanding of the subject. It’s all just surface-level knowledge that anyone can look up. How can anyone trust such shallow knowledge when it’s obvious they don’t grasp the complexity of the issue?"
-      Output:
-      {
-        "discredit": [
-          { "span": "That so-called expert is just parroting information they've heard", "intensity": "moderate" },
-          { "span": "they have no real understanding of the subject", "intensity": "moderate" },
-          { "span": "How can anyone trust such shallow knowledge when it’s obvious they don’t grasp the complexity of the issue?", "intensity": "high" }
-        ]
-      }
-
-      Example 3:
-      Input text: "Don't trust any vaccine recommendations. People often act like they know better, but they’re just parroting what they’ve heard. The pharmaceutical companies are just out to make money, and they don’t care about your health. It's shocking how they manipulate people's fears to sell their products. They are more interested in controlling the population."
-      Output:
-      {
-        "discredit": [
-          { "span": "Don't trust any vaccine recommendations", "intensity": "high" },
-          { "span": "The pharmaceutical companies are just out to make money", "intensity": "moderate" },
-          { "span": "They are more interested in controlling the population", "intensity": "high" }
-        ]
-      }
-
-      Example 4:
-      Input text: "While some say the mainstream media is reliable, anyone who truly looks into the matter knows that the truth is always hidden from the public."
-      Output:
-      {
-        "discredit": [
-          { "span": "anyone who truly looks into the matter knows that the truth is always hidden from the public", "intensity": "high" }
-        ]
-      }
-
-      Example 5:
-      Input text: "The government has recently announced several new public health initiatives aimed at improving the well-being of citizens. These include better access to healthcare and increased funding for medical research."
-      Output:
-      {
-        "discredit": []
-      }
-
-      Input text:
-
-  polarization_prompt: >
-    [SCENARIO]
-    Create a dataset for polarization detection in political discourse, specifically for election and voting topics.
-    
-    [INSTRUCTIONS]
-    Step 1 (Signal Extraction):
-      Identify and extract verbatim expressions that:
-        - Promote strong division or hostility between opposing political groups, parties, or ideologies.
-        - Frame political opponents in a highly negative or exaggerated light, often undermining their credibility, legitimacy, or intentions.
-        - Promote fear, mistrust, or emotional reactions that intensify polarization or encourage conflict.
-      
-      Focus on:
-        - Election rhetoric that exaggerates differences or attacks opponents without factual backing.
-        - Disinformation or inflammatory language targeting political candidates, parties, or supporters.
-        - Appeals to emotion (e.g., fear-mongering, incitement, or exaggerated urgency) in the context of elections.
-
-    Step 2 (Spectrum Classification):
-      For each expression, assign a severity value indicating the **degree of polarization** in the statement, using one of the following:
-        - "low": Mild negative tone or rhetoric, generally not inciting conflict but reflecting a polarized perspective.
-        - "moderate": Strong language that frames opposition in a highly negative light or exaggerates differences but without overt incitement.
-        - "high": Explicit incitement, dangerous rhetoric, or claims that directly attack or delegitimize opposition, fostering significant division or conflict.
-
-    [RESPONSE FORMAT]
-      - Output must be a JSON array under key "polarization" with fields:
-          - "text": string (exact span)
-          - "severity": string ("low", "moderate", or "high")
-      - Annotate ONLY verbatim spans from input text
-      - Do NOT paraphrase, infer, or speculate beyond the text
-      - Do not label:
-        - Neutral disagreement or factual critiques of policies
-        - Legitimate political differences presented in a reasoned manner
-        - Statements marked with clear sarcasm or humor unless they intend to incite division
-      
-      If no valid expression is found, return:
-        { "polarization": [] }
-
-    [EXAMPLES]
-    Example 1:
-    Input text:
-    "The opposition is just a bunch of corrupt individuals who only care about lining their pockets. They don’t care about the people—they’re destroying our country."
-    Output:
+    Return a JSON object with three keys: trolling, discredit, polarization.  
+    Each must contain a list of dictionaries of the form:
     {
+      "trolling": [
+        { "span": "...", "intensity": "low|moderate|high" }
+      ],
+      "discredit": [
+        { "span": "...", "intensity": "low|moderate|high" }
+      ],
       "polarization": [
-        {
-          "text": "The opposition is just a bunch of corrupt individuals who only care about lining their pockets",
-          "severity": "high"
-        },
-        {
-          "text": "They’re destroying our country",
-          "severity": "high"
-        }
+        { "span": "...", "intensity": "low|moderate|high" }
       ]
     }
+    If no spans are found for a category, return an empty list for it.
 
-    Example 2:
+
+    Example:
     Input text:
-    "Some people believe the current government is the best we've ever had, while others claim it's the worst. The truth is probably somewhere in between, but it’s clear we need a change."
+    "The so-called Election Commission pretends to act independently, but everyone knows they're just puppets of the ruling party. Anyone who trusts them is either naive or complicit."
     Output:
     {
-      "polarization": [
-        {
-          "text": "The current government is the best we've ever had",
-          "severity": "low"
-        },
-        {
-          "text": "it's clear we need a change",
-          "severity": "moderate"
-        }
-      ]
-    }
-
-    Example 3:
-    Input text:
-    "If the other party wins, our country will be doomed. They’ll wreck everything we’ve built. We must stop them at all costs!"
-    Output:
-    {
-      "polarization": [
-        {
-          "text": "If the other party wins, our country will be doomed",
-          "severity": "high"
-        },
-        {
-          "text": "We must stop them at all costs",
-          "severity": "high"
-        }
-      ]
-    }
-
-    Example 4:
-    Input text:
-    "I disagree with some of their policies, but I think we can find common ground on issues like healthcare and education."
-    Output:
-    {
+      "trolling": [
+        { "span": "Anyone who trusts them is either naive or complicit", "intensity": "moderate" }
+      ],
+      "discredit": [
+        { "span": "The so-called Election Commission pretends to act independently", "intensity": "moderate" },
+        { "span": "they're just puppets of the ruling party", "intensity": "high" }
+      ],
       "polarization": []
     }
 
+    Example:
+    Input text:
+    "I partiti di sinistra vivono in una realtà parallela. Non hanno nulla in comune con il popolo reale e continuano a dividere il paese con le loro ideologie."
+    Output:
+    {
+      "trolling": [],
+      "discredit": [],
+      "polarization": [
+        { "span": "vivono in una realtà parallela", "intensity": "moderate" },
+        { "span": "continuano a dividere il paese con le loro ideologie", "intensity": "moderate" }
+      ]
+    }
+
+    Example:
+    Input text:
+    "Il ministro ha presentato un nuovo piano economico, sottolineando l’importanza del dialogo con le parti sociali per affrontare la crisi."
+    Output:
+    {
+      "trolling": [],
+      "discredit": [],
+      "polarization": []
+    }
+
+
     Input text:
 
-  hate_speech_prompt: >
-    [SCENARIO]
-    Create a dataset for hate and toxic speech detection.
+  toxicity_prompt: >
+    You are an agent and your task is to identify and extract exact textual spans in journalistic writing that reflect hostile, identity-based, or conspiratorial rhetoric, especially around electoral legitimacy and democratic governance.
+    Your input will be excerpts from journalistic texts (not social media), so the text is embedded in formal, editorialized language.
 
-    [INSTRUCTIONS]
-    Identify and extract specific expressions from the input text that fall into one of the following mutually exclusive categories:
-    - "hate_speech": explicit hatred, threats, or violent expressions targeting individuals or groups based on identity or affiliation
-    - "racist": expressions involving racial, ethnic, or national prejudice or supremacy
-    - "sexist": expressions of misogyny, gender-based stereotyping, or discrimination
-    - "toxic_speech": generalized insults, demeaning tone, incivility, or verbal aggression not attributable to hate, racism, or sexism
 
-    Each extracted expression must be accompanied by an intensity label reflecting its semantic strength:
-    - "low": implicit, suggestive, or borderline content
-    - "moderate": clearly offensive but not extreme
-    - "high": explicit, aggressive, or severely toxic
+    The categories are mutually exclusive: each span must belong to only one of the following:
 
-    [RESPONSE FORMAT]
-    - Output must be a single valid JSON object with keys: "hate_speech", "racist", "sexist", "toxic_speech". 
-    - ONLY extract exact spans from the input text. Do NOT paraphrase, rewrite, or generalize.
-    - Assign each expression to the single most specific category it matches. Do NOT duplicate phrases across multiple categories.
-    - Neutral opinions, factual assertions, or unverifiable speculations must NOT be labeled.
-    - Each value must be a list of dictionaries, each containing:
-        - "span": the extracted expression
-        - "intensity": one of "low", "moderate", or "high"
-    - If no relevant expressions are found for a given key, assign an empty list: `"key": []`.
+    Hate Speech
+    Verbal hostility based on group identity (ethnicity, nationality, religion, ideology).  
 
-    [EXAMPLES]
+    Racist
+    Expressions involving racial, ethnic, or nationalist slurs or delegitimizing narratives.
+
+    Sexist
+    Gender-based insults, condescension, or stereotyping in a political context.
+
+    Toxic Speech
+    General verbal aggression or contempt not tied to group identity (e.g., idiot, parasite, traitor).
+
+    Conspiracy
+    Phrases that allege or imply covert manipulation of elections, elite control, or anti-democratic plots.  
+    Intensity levels:
+    - low: vague suspicion  
+    - moderate: framed but indirect claims  
+    - high: explicit plotting by elites or regime
+
+
+    Return a JSON object with the following structure:
+    {
+      "hate_speech": [ { "span": "...", "intensity": "low|moderate|high" } ],
+      "racist": [ { "span": "...", "intensity": "low|moderate|high" } ],
+      "sexist": [ { "span": "...", "intensity": "low|moderate|high" } ],
+      "toxic_speech": [ { "span": "...", "intensity": "low|moderate|high" } ],
+      "conspiracy": [ { "span": "...", "intensity": "low|moderate|high" } ]
+    }
+    Only assign each span to one category. If no content qualifies, return an empty list for that category.
+
+
     Example 1:
-    Input text: "I’m absolutely sick of immigrants coming here and taking our jobs. They don’t appreciate our culture, and now they’re trying to change everything to suit their needs. Go back to your country, we don’t want you here."
-    Output: {
+    Input text:
+    "It’s always the same: elites gather behind closed doors to rig the outcome. Refugees? Just a way to destabilize our country from within."
+    Output:
+    {
       "hate_speech": [
-        { "span": "I’m absolutely sick of immigrants coming here and taking our jobs", "intensity": "moderate" },
-        { "span": "they’re trying to change everything to suit their needs", "intensity": "moderate" }
+        { "span": "Refugees? Just a way to destabilize our country from within", "intensity": "moderate" }
       ],
-      "racist": [
-        { "span": "Go back to your country", "intensity": "high" },
-        { "span": "we don’t want you here", "intensity": "high" }
-      ],
+      "racist": [],
       "sexist": [],
-      "toxic_speech": []
+      "toxic_speech": [],
+      "conspiracy": [
+        { "span": "elites gather behind closed doors to rig the outcome", "intensity": "high" }
+      ]
     }
 
     Example 2:
-    Input text: "You’re just another loudmouth feminist who got a job because of a diversity quota. All you do is complain, and no one cares about your whining. Why don’t you just sit down and let the real professionals handle it?"
-    Output: {
-      "hate_speech": [
-        { "span": "no one cares about your whining", "intensity": "moderate" },
-        { "span": "Why don’t you just sit down and let the real professionals handle it", "intensity": "high" }
-      ],
+    Input text:
+    "È incredibile che quella incompetente sia ancora in carica. Sta lì solo per farsi vedere, non ha mai avuto una vera idea."
+    Output:
+    {
+      "hate_speech": [],
       "racist": [],
       "sexist": [
-        { "span": "another loudmouth feminist", "intensity": "high" },
-        { "span": "got a job because of a diversity quota", "intensity": "moderate" }
+        { "span": "Sta lì solo per farsi vedere", "intensity": "moderate" }
       ],
       "toxic_speech": [
-        { "span": "You’re just another loudmouth feminist", "intensity": "moderate" }
-      ]
-    }
-
-    Example 3:
-    Input text: "Sei una scusa inutile per una persona. Non sopporto guardarti, sta' zitto una volta per tutte. Non aggiungi nulla a questa conversazione e probabilmente non lo farai mai."
-    Output: {
-      "hate_speech": [],
-      "racist": [],
-      "sexist": [],
-      "toxic_speech": [
-        { "span": "Sei una scusa inutile per una persona", "intensity": "moderate" },
-        { "span": "sta' zitto una volta per tutte", "intensity": "high" },
-        { "span": "Non aggiungi nulla a questa conversazione", "intensity": "moderate" }
-      ]
-    }
-
-    Example 4:
-    Input text: "I understand why people question the effectiveness of some historical policies, but saying that the Holocaust was exaggerated or that the moon landing was faked is not only ignorant, it’s disrespectful. We must respect the facts, even when they don’t fit our narrative."
-    Output: {
-      "hate_speech": [],
-      "racist": [],
-      "sexist": [],
-      "toxic_speech": [
-        { "span": "saying that the Holocaust was exaggerated", "intensity": "moderate" },
-        { "span": "the moon landing was faked", "intensity": "low" }
-      ]
-    }
-
-    Example 5:
-    Input text: "The discussion about climate change has been polarizing, but it is important to engage in respectful conversations based on science. Everyone should be open to learning more and not dismiss ideas just because they don’t align with our personal beliefs."
-    Output: {
-      "hate_speech": [],
-      "racist": [],
-      "sexist": [],
-      "toxic_speech": []
-    }
-
-    Input text:
-
-  conspiracy_prompt: > 
-    [SCENARIO]
-    You are creating a dataset for fine-grained conspiracy theory detection in multilingual texts.
-    Your goal is to identify and extract specific textual spans that suggest conspiratorial narratives, avoiding paraphrase or overgeneralization.
-
-    [INSTRUCTIONS]
-    1. For each input text, extract only the exact spans that explicitly or implicitly suggest:
-      a. Existence of hidden coordinated plots,
-      b. Involvement of powerful unseen actors,
-      c. Lack of verifiable evidence (relying on insinuation or speculative language).
-    2. DO NOT extract:
-      - Factual or verifiable content.
-      - Vague distrust with no reference to secret plans or agents.
-      - General grievances or criticism without conspiratorial framing.
-    3. For each extracted span, assign an intensity level (Low / Moderate / High) representing the strength of conspiratorial framing.
-    4. If no conspiratorial content is found, return an empty array (and omit intensity scores).
-    5. Preserve the original language.
-    6. Output must be a valid JSON object with key `conspiracy`, where each value is an object with `text` and `intensity`.
-
-    [RESPONSE FORMAT]
-    {
-      "conspiracy": [
-        {"span": "...", "intensity": "Low" | "Moderate" | "High"},
-        ...
-      ]
-    }
-    [EXAMPLES]
-
-    Example 1:
-    Input text: "While the official numbers suggest a steady recovery, many believe that the government is hiding the truth about the virus to push their own agenda."
-    Output:{
-      "conspiracy": [
-        {
-          "span": "the government is hiding the truth about the virus to push their own agenda",
-          "intensity": "Moderate"
-        }
-      ]
-    }
-
-    Example 2:
-    Input text: "Alcuni utenti sul forum hanno affermato che Big Pharma non vuole che la gente sappia che la cura è naturale, e che la stanno sopprimendo per proteggere i loro profitti."
-    Output:{
-      "conspiracy": [
-        {
-          "span": "Big Pharma non vuole che la gente sappia che la cura è naturale",
-          "intensity": "Moderate"
-        },
-        {
-          "span": "la stanno sopprimendo per proteggere i loro profitti",
-          "intensity": "High"
-        }
-      ]
-    }
-
-    Example 3:
-    Input text: "According to the post, the real reason for the lockdowns isn’t public health, but a secret plan to control the population using fear and digital surveillance."
-    Output:{
-      "conspiracy": [
-        {
-          "span": "a secret plan to control the population using fear and digital surveillance",
-          "intensity": "High"
-        }
-      ]
-    }
-
-    Example 4:
-    Input text: "The article discusses misinformation on social media, where people claim that elections are always rigged and that votes are manipulated by a deep state."
-    Output:{
-      "conspiracy": [
-        {
-          "span": "elections are always rigged",
-          "intensity": "Moderate"
-        },
-        {
-          "span": "votes are manipulated by a deep state",
-          "intensity": "High"
-        }
-      ]
-    }
-
-    Example 5:
-    Input text: "The Health Minister presented the latest data on COVID-19 recovery rates, and emphasized the importance of public trust in scientific guidelines."
-    Output:{
+        { "span": "quella incompetente", "intensity": "moderate" },
+        { "span": "non ha mai avuto una vera idea", "intensity": "moderate" }
+      ],
       "conspiracy": []
     }
 
-    Input text:
-
-  pseudoscience_prompt: >
-    [SCENARIO]
-    Create a dataset for pseudoscience signal detection.
-
-    [INSTRUCTIONS]
-    Step 1 (Extraction):
-      Identify all verbatim expressions that:
-        - Promote scientifically false, disproven, or unverifiable claims
-        - Present such claims as if they were established scientific facts
-        - Lack empirical support, falsifiability, or reproducibility
-
-      Focus especially on:
-        - Alternative medicine presented as curative
-        - Energy healing, crystals, detox scams, misuse of "quantum", anti-vax claims, etc.
-        - Misuse of scientific-sounding language to convey false authority
-
-    Step 2 (Spectrum Classification):
-      For each expression, assign a severity value indicating the **degree of pseudoscientificity**, using one of the following:
-        - "low": misleading or vague science-y language (e.g., vibrational frequency, bioenergy)
-        - "moderate": unverifiable or non-peer-reviewed claim framed as fact (e.g., essential oils cure ADHD)
-        - "high": directly contradicts medical/scientific consensus, or encourages dangerous behavior (e.g., don't vaccinate children)
-
-    [RESPONSE FORMAT]
-      - Output must be a JSON array under key `"pseudoscience"` with fields:
-          - "text": string (exact span)
-          - "justification"`: string (reasoning ≤50 words)
-          - "severity": string ("low", "moderate", or "high")
-      - Annotate ONLY verbatim spans from input text
-      - Do NOT paraphrase, infer, or speculate beyond the text
-      - Do not label:
-        - Honest speculation or doubt
-        - Religious/spiritual claims unless framed as science
-        - Questions or clearly subjective beliefs
-
-      If no valid expression is found, return:
-        { "pseudoscience": [] }
-
-    [EXAMPLES]
-    Example 1:
-    Input text:
-    "Many people believe that maintaining a positive mindset can physically eliminate tumors, although there's no medical evidence. At the same time, regular medical checkups are essential for early detection of serious conditions."
-    Output:
-    {
-      "pseudoscience": [
-        {
-          "text": "maintaining a positive mindset can physically eliminate tumors",
-          "justification": "This is presented as a causal medical mechanism without clinical validation, and contradicts oncological consensus.",
-          "severity": "moderate"
-        }
-      ]
-    }
-
-    Example 2:
-    Input text:
-    "While the scientific community urges caution, some holistic practitioners suggest that placing crystals on the body can realign your energy fields. Additionally, detox foot pads are marketed as a way to draw toxins out of your body overnight."
-    Output:
-    {
-      "pseudoscience": [
-        {
-          "text": "placing crystals on the body can realign your energy fields",
-          "justification": "It promotes a non-falsifiable, unscientific mechanism based on energy fields with no physiological substrate.",
-          "severity": "moderate"
-        },
-        {
-          "text": "detox foot pads are marketed as a way to draw toxins out of your body overnight",
-          "justification": "It claims physiological detoxification via non-validated consumer products with no supporting evidence.",
-          "severity": "moderate"
-        }
-      ]
-    }
-
     Example 3:
     Input text:
-    "Sunlight helps with vitamin D synthesis, but some blogs falsely claim that you can cure depression entirely just by walking barefoot on the earth."
+    "Il presidente della Camera ha aperto la seduta ricordando l’importanza della trasparenza e della partecipazione democratica."
     Output:
     {
-      "pseudoscience": [
-        {
-          "text": "you can cure depression entirely just by walking barefoot on the earth",
-          "justification": "Frames a disproven wellness practice (grounding) as a clinical treatment for depression.",
-          "severity": "high"
-        }
-      ]
-    }
+      "hate_speech": [],
+      "racist": [],
+      "sexist": [],
+      "toxic_speech": [],
+      "conspiracy": []
+    } 
 
-    Example 4:
-    Input text:
-    "According to recent guidelines, washing your hands reduces transmission of infectious diseases. Clinical trials have demonstrated that vaccines are safe and effective in preventing illness."
-    Output:
-    {
-      "pseudoscience": []
-    }
 
     Input text:
-
-
-election:
-vax:
-  

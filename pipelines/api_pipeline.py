@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from langgraph.graph import StateGraph, START, END
 from states.state import State
@@ -10,13 +11,19 @@ from nodes.SpanFormat import SpanFormat
 from nodes.StreamWriter import StreamWriter
 
 from utils.GeminiCostAnalyze import GeminiCostAnalyze
+import traceback
+import json
+import os
 
 def create_pipeline(annotator, output_correction, span_format, writer):
+    ### NER annotation pipeline ###
+    
     workflow = StateGraph(State)
     workflow.add_node("annotator_node", annotator)
     workflow.add_node("correction_node", output_correction)
     workflow.add_node("span_node", span_format)
     workflow.add_node("writer_node", writer)
+    
     workflow.add_edge(START, "annotator_node")
     workflow.add_edge("annotator_node", "correction_node")
     workflow.add_edge("correction_node", "span_node")
@@ -25,8 +32,8 @@ def create_pipeline(annotator, output_correction, span_format, writer):
     return workflow.compile()
 
 
-def run_pipeline(input_path, output_path, checkpoint_path,topic, api_llm, prompts, llm_config):
-    annotator = Annotator(llm=api_llm, prompts=prompts,topic=topic, input_context=llm_config['n_ctx'])
+def run_pipeline(input_path, output_path, checkpoint_path, api_llm, prompts, llm_config):
+    annotator = Annotator(llm=api_llm, prompts=prompts, input_context=llm_config['n_ctx'])
     correction = OutputCorrection(similarity_threshold=79)
     span_format = SpanFormat()
     writer = StreamWriter(output_file=output_path)
@@ -44,9 +51,13 @@ def run_pipeline(input_path, output_path, checkpoint_path,topic, api_llm, prompt
 
     for idx in range(checkpoint, len(dataset)):
         item = dataset[idx]
+        
+        time.sleep(61) # <-- Attesa di 61 secondi per evitare rate limit
+        
         if item.get('language') not in ['Italian', 'English']:
             continue
-
+        
+        
         try:
             state = graph.invoke({
                 'text': item['text'].replace("\n", " "),
@@ -59,8 +70,11 @@ def run_pipeline(input_path, output_path, checkpoint_path,topic, api_llm, prompt
                 break
         except Exception as e:
             print(f"Errore durante il processing: {e}")
+            traceback.print_exc()  # <-- stack trace completo
             break
-
+        
+        
+        
         print(f"Salvato: {idx + 1}/{len(dataset)}")
 
         with open(checkpoint_path, "w", encoding="utf-8") as f:
@@ -70,4 +84,5 @@ def run_pipeline(input_path, output_path, checkpoint_path,topic, api_llm, prompt
             cost_analyzer.daily_cost(threshold=llm_config['daily_cost_threshold'])
         except RuntimeError as e:
             print(f"Errore nel controllo costi: {e}")
+            traceback.print_exc()  # <--  stack trace
             break

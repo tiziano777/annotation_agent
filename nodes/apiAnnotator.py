@@ -18,7 +18,7 @@ class Annotator:
     Nodo LangGraph compatibile con modelli LLM API-based (es. Gemini via LangChain).
     """
 
-    def __init__(self, llm, input_context,topic=None, prompts=None):
+    def __init__(self, llm, input_context, prompts=None):
         """
         :param llm: Modello LangChain-compatible (es. ChatGoogleGenerativeAI).
         :param input_context: Numero massimo di token di contesto.
@@ -26,10 +26,9 @@ class Annotator:
         """
         self.llm = llm
         self.system_prompts = prompts
-        self.topic = topic
         self.input_context = input_context
         self.logger = GeminiCostLogger()  # Istanza per logging dei token e costi
-        self.end_prompt = "\n Output JSON Syntax: \n"
+        self.end_prompt = "\n Output: \n"
 
     def annotate(self, state: State):
         text = state.text
@@ -44,6 +43,8 @@ class Annotator:
         total_output_tokens = 0
         clickbait_score = 0
 
+        ####### CALL CUSTOM LOGIC #######
+        
         # Clickbait detection
         clickbait_prompt = self.system_prompts.get('clickbait_prompt', "")
         try:
@@ -61,32 +62,54 @@ class Annotator:
             print(f"Errore nel clickbait parsing: {e}")
         
         # Segment-level annotation
-        annotation_prompts = self.system_prompts.get(self.topic, 'general_annotation_prompts')
+        annotation_prompts = self.system_prompts.get('election_optimized_strategy')
+        gate_prompt = self.system_prompts.get('gate_prompt', "")
+
         for s in sentences:
             cumulative_annotations = []
+            
             if s.strip():
+                # ⛔️ Step 1: GATE STEP To avoid unusefull calls (Skip if score < 3)
+                
+                try:
+                    gate_response = self.llm.invoke(gate_prompt + s + self.end_prompt)
+                    log = gate_response.usage_metadata
+                    total_input_tokens += log["input_tokens"]
+                    total_output_tokens += log["output_tokens"]
+
+                    json_gate = self.extract_json(gate_response.content)
+                    gate_score = float(json_gate.get('score', 0))
+                except Exception as e:
+                    print(f"Errore nel gate scoring: {e}")
+                    continue  # Skip segment if error in gate or malformed output
+
+                if gate_score < 3:
+                    print(f"gate score too low {gate_score}, skipping segment \n")
+                    print(f" \n Segmento skipped: {s} \n\n")
+                    continue  # Skip segment if gate score is below threshold
+
                 texts.append(s)
+
+                # ✅ Step 2: Run segment-level annotations (only if gate passed)
                 for prompt_name, prompt_template in annotation_prompts.items():
                     try:
                         full_prompt = prompt_template + s + self.end_prompt
                         response = self.llm.invoke(full_prompt)
-                        
+
                         log = response.usage_metadata
                         total_input_tokens += log["input_tokens"]
                         total_output_tokens += log["output_tokens"]
 
                         parsed = self.extract_json(response.content)
                         cumulative_annotations.append(parsed)
-                        #print(f"[{prompt_name}] Input: {s}\n→ Output: {parsed}\n")
-                        
+
                     except Exception as e:
                         print(f"Errore nella annotazione con prompt {prompt_name}: {e}")
                         traceback.print_exc()
                         cumulative_annotations.append({prompt_name: []})
-            
-            cumulative_annotations = self.flatten_dict_list(cumulative_annotations)  
 
-            signals.append(cumulative_annotations)
+                cumulative_annotations = self.flatten_dict_list(cumulative_annotations)
+                signals.append(cumulative_annotations)
 
         self.logger(total_input_tokens,total_output_tokens)
         
@@ -96,9 +119,7 @@ class Annotator:
             'segmented_signals': signals,
             'input_tokens': total_input_tokens,
             'output_tokens': total_output_tokens,
-        }
-
-    
+        } 
     
     def extract_json(self, json_text: str) -> dict:
         """
@@ -134,7 +155,7 @@ class Annotator:
         for sentence in sentences:
             test_chunk = current_chunk + [sentence]
             test_text = " ".join(test_chunk)
-            token_count = self.logger.count_tokens(test_text)
+            token_count =  max(1, round(len(test_text) / 4.0))
             if token_count <= max_tokens:
                 current_chunk.append(sentence)
             else:
@@ -171,5 +192,5 @@ class Annotator:
         """
         Entry-point per LangGraph node.
         """
-        print('INPUT Annotator: ', state)
+        #print('INPUT Annotator: ', state)
         return self.annotate(state)
