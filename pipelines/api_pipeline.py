@@ -52,7 +52,7 @@ def run_pipeline(input_path, output_path, checkpoint_path, api_llm, prompts, llm
     for idx in range(checkpoint, len(dataset)):
         item = dataset[idx]
         
-        #time.sleep(61) # <-- Attesa di 61 secondi per evitare rate limit
+        time.sleep(61) # <-- Attesa di 61 secondi per evitare rate limit
         
         if item.get('language') not in ['Italian', 'English']:
             continue

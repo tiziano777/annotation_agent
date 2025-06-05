@@ -9,62 +9,8 @@ from json_repair import repair_json
 
 from states.state import State
 from utils.GeminiCostLogger import GeminiCostLogger 
+from utils.GeminiErrorHandler import GeminiErrorHandler
 
-
-def extract_retry_delay_from_error(e) -> float | None:
-    """
-    Estrae il retry delay da un'eccezione ResourceExhausted o simile.
-
-    Presuppone che l'eccezione `e` abbia un attributo `details`, 
-    dove nella posizione 2 (convenzionalmente) è presente un dizionario
-    con 'retry_delay' espresso come {'seconds': int}.
-    """
-    try:
-        if hasattr(e, 'code') and e.code == 429:
-            # Estrarre campo "retry_delay" se disponibile
-            #delay = e.details[2]['retry_delay']['seconds']
-            delay = e.details[2].retry_delay.seconds
-            print(delay)
-            return float(delay)
-    except Exception as ex:
-        print(f"[extract_retry_delay_from_error] Errore durante l'estrazione del retry delay: {ex}")
-    
-    return None
-
-def invoke_with_retry(llm, prompt, max_retries=5, retry_count=0):
-    """
-    Richiama `llm.invoke(prompt)` gestendo automaticamente rate-limit con retry ricorsivo.
-    
-    Se il codice d'errore è 429, estrae `retry_delay` e attende.
-    In caso contrario, stampa errore ed esce.
-
-    :param llm: Oggetto LLM (LangChain-compatible).
-    :param prompt: Prompt da inviare.
-    :param max_retries: Numero massimo di retry.
-    :param retry_count: Contatore di retry (usato internamente per ricorsione).
-    :return: Risultato di `llm.invoke(prompt)`.
-    """
-    try:
-        return llm.invoke(prompt)
-
-    except Exception as e:
-        if hasattr(e, "code") and e.code == 429:
-            delay = extract_retry_delay_from_error(e)
-            if delay is not None:
-                print(f"[invoke_with_retry] Rate limit: attendo {delay:.2f} secondi (retry #{retry_count + 1})")
-                time.sleep(delay)
-                if retry_count < max_retries:
-                    return invoke_with_retry(llm, prompt, max_retries=max_retries, retry_count=retry_count + 1)
-                else:
-                    print("[invoke_with_retry] Numero massimo di retry superato. Esco.")
-                    exit(1)
-            else:
-                print("[invoke_with_retry] Retry delay non trovato nell'errore 429. Esco.")
-                exit(1)
-        else:
-            print(f"[invoke_with_retry] Errore non gestito: {e}")
-            traceback.print_exc()
-            exit(1)
 
 # Caricamento modelli SpaCy
 en_nlp = spacy.load("en_core_web_sm")
@@ -85,6 +31,7 @@ class Annotator:
         self.system_prompts = prompts
         self.input_context = input_context
         self.logger = GeminiCostLogger()  # Istanza per logging dei token e costi
+        self.error_handler = GeminiErrorHandler()
         self.end_prompt = "\n Output: \n"
 
     def annotate(self, state: State):
@@ -106,7 +53,7 @@ class Annotator:
         clickbait_prompt = self.system_prompts.get('clickbait_prompt', "")
         try:
             full_cb_prompt = clickbait_prompt + title
-            raw_clickbait = invoke_with_retry(self.llm, full_cb_prompt)
+            raw_clickbait = self.error_handler.invoke_with_retry(llm=self.llm, prompt=full_cb_prompt)
 
             
             log = raw_clickbait.usage_metadata
@@ -131,7 +78,7 @@ class Annotator:
                 # ⛔️ Step 1: GATE STEP To avoid unusefull calls (Skip if score < 3)
                 
                 try:
-                    gate_response = invoke_with_retry(self.llm, gate_prompt + s + self.end_prompt)
+                    gate_response = self.error_handler.invoke_with_retry(llm=self.llm, prompt= str(gate_prompt + s + self.end_prompt))
                     log = gate_response.usage_metadata
                     total_input_tokens += log["input_tokens"]
                     total_output_tokens += log["output_tokens"]
@@ -153,7 +100,7 @@ class Annotator:
                 for prompt_name, prompt_template in annotation_prompts.items():
                     try:
                         full_prompt = prompt_template + s + self.end_prompt
-                        response = self.llm.invoke(full_prompt)
+                        response =  self.error_handler.invoke_with_retry(llm=self.llm, prompt=full_prompt)
                         
                         log = response.usage_metadata
                         total_input_tokens += log["input_tokens"]
