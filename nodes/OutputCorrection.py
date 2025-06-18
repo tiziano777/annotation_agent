@@ -67,11 +67,12 @@ class OutputCorrection():
         return corrected_signals
     
     def __call__(self, state:State):
-        #print('\nOUTPUT ANNOTATOR & INPUT OutputCorrector: \n', state.segmented_text, "\n",state.segmented_signals)
+        print('\nOUTPUT ANNOTATOR & INPUT OutputCorrector: \n', state.segmented_text[:50], "\n",state.segmented_signals)
         signals=[]
         for text,signal in zip(state.segmented_text, state.segmented_signals):
             corrected_signal_item=self.clean_annotation(text,signal)
             signals.append(corrected_signal_item)
-        print('output signals:\n ')
-        print(signals)
+
+        print('\nOUTPUT OutputCorrector: \n', state.segmented_text[:50], "\n",state.segmented_signals)
+        state.refined_once = True 
         return {'segmented_signals': signals}

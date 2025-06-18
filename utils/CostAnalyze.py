@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 import pandas as pd
 
-class GeminiCostAnalyze:
+class CostAnalyze:
     """
     Classe per il calcolo costi di servizio API.
     """

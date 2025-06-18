@@ -18,3 +18,5 @@ class State(BaseModel):
     
     input_tokens: Optional[int] = Field(default=None, description="Numero di token in input")
     output_tokens: Optional[int] = Field(default=None, description="Numero di token in output")
+
+    refined_once: bool = Field(default=False, description="Flag per indicare se il raffinamento è in corso o completato")

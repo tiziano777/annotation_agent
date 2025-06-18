@@ -2,7 +2,7 @@
 import traceback
 import time
 
-class GeminiErrorHandler:
+class ErrorHandler:
     
     def __init__(self):
         pass
@@ -16,12 +16,13 @@ class GeminiErrorHandler:
         con 'retry_delay' espresso come {'seconds': int}.
         """
         try:
-            if hasattr(e, 'code') and e.code == 429:
+            if hasattr(e, 'code') and e.code == 429 and hasattr(e, 'details') and hasattr(e.details[2], 'retry_delay') and hasattr(e.details[2].retry_delay, 'seconds'):
                 # Estrarre campo "retry_delay" se disponibile
-                #delay = e.details[2]['retry_delay']['seconds']
                 delay = e.details[2].retry_delay.seconds
-                print(delay)
+                
                 return float(delay)
+            else:
+                print(f"[extract_retry_delay_from_error] Errore non gestito, retry delay.seconds: {e}")
         except Exception as ex:
             print(f"[extract_retry_delay_from_error] Errore durante l'estrazione del retry delay: {ex}")
         

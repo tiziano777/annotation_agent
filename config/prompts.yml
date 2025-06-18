@@ -103,6 +103,43 @@ clickbait_prompt: >
 
   Input text:
 
+refinement_prompt: >
+  You are a helpful assistant. Given a text spans annotated with a specific label, refine it by trimming irrelevant or redundant parts at the beginning and/or end to make it more representative of the semantic signal associated with the label.
+  Do not add or rewrite content, only shorten the span meaningfully while preserving its core intent.
+
+  Format:
+  Input: { "<label>": ["<span_1>,<span_2>"] }
+  Output: { "<label>": ["<trimmed_span_1>,<trimmed_span_2>"] }
+
+  Few-shot examples:
+
+  Input:
+  { "discredit":["Turkish officials are scrutinizing upcoming local elections after several strange anomalies showed up on voter rolls, including new voters who are over 100 years old. The Republican People’s"]}
+  Output:
+  "strange anomalies showed up on voter rolls, including new voters who are over 100 years old"
+
+  Input:
+  { "trolling": ["Haha, as usual @Dutchess_III you pour yourself over a thread & mostly get shit wrong. I only posted"] }
+  Output:
+  { "trolling": ["you pour yourself over a thread & mostly get shit wrong"]}
+
+  Input:
+
+  { "racist": ["Kamala is black? I checked. No, she’s Tamil Indian and Jamaican. I would have seen Native American if I had to pick something other than white. I don’t know what difference it makes though"] }
+  Output:
+  { "racist": ["Kamala is black? I checked. No, she’s Tamil Indian and Jamaican"]}
+
+  Input:
+  { "trolling": ["ago war veterans, who have been as faithful as dogs to the Zanu PF dictatorship all along, found themselves"] }
+  Output:
+  { "trolling": ["war veterans, who have been as faithful as dogs to the Zanu PF dictatorship"]}
+
+  Input:
+
+  { "hate_speech": ["that less than four decades ago all blacks were one in the fight to end white exploitation and oppression. The white"] }
+  Output:
+  { "hate_speech": ["all blacks were one in the fight to end white exploitation and oppression"]}
+
 election_optimized_strategy:
 
   delegitimization_prompt: >
@@ -274,3 +311,5 @@ election_optimized_strategy:
 
 
     Input text:
+
+

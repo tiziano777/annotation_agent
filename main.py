@@ -2,9 +2,9 @@ import os
 import json
 import yaml
 from langchain_google_genai import ChatGoogleGenerativeAI
-from utils.GeminiCostAnalyze import GeminiCostAnalyze
+from utils.CostAnalyze import CostAnalyze
 
-from pipelines.api_pipeline import run_pipeline 
+from pipelines.api_pipeline_refiner import run_pipeline 
 # from pipelines.cpp_pipeline import run_pipeline 
 
 # CONFIG
@@ -49,7 +49,7 @@ def main():
         #os.remove(CHECKPOINT_PATH)
         
         #costAnalyzer non richiesto per i modelli locali
-        GeminiCostAnalyze().daily_cost_log()
+        CostAnalyze().daily_cost_log()
         
     except Exception as e:
         print(f"Errore durante l'esecuzione: {e}")

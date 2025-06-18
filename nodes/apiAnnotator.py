@@ -8,8 +8,8 @@ from typing import List, Dict, Any
 from json_repair import repair_json
 
 from states.state import State
-from utils.GeminiCostLogger import GeminiCostLogger 
-from utils.GeminiErrorHandler import GeminiErrorHandler
+from utils.CostLogger import CostLogger 
+from utils.ErrorHandler import ErrorHandler
 
 
 # Caricamento modelli SpaCy
@@ -30,8 +30,8 @@ class Annotator:
         self.llm = llm
         self.system_prompts = prompts
         self.input_context = input_context
-        self.logger = GeminiCostLogger()  # Istanza per logging dei token e costi
-        self.error_handler = GeminiErrorHandler()
+        self.logger = CostLogger()  # Istanza per logging dei token e costi
+        self.error_handler = ErrorHandler()
         self.end_prompt = "\n Output: \n"
 
     def annotate(self, state: State):
@@ -40,14 +40,14 @@ class Annotator:
         title = state.title or ""
 
         sentences = self.process_text(language, text)
-        signals = []
-        texts = []
+        signals = []  # Qui accumuleremo solo i segnali validi
+        texts = []    # E qui i testi corrispondenti
 
         total_input_tokens = 0
         total_output_tokens = 0
         clickbait_score = 0
 
-        ####### CALL CUSTOM LOGIC #######
+        ####### START CUSTOM LOGIC #######
         
         # Clickbait detection
         clickbait_prompt = self.system_prompts.get('clickbait_prompt', "")
@@ -76,7 +76,6 @@ class Annotator:
             
             if s.strip():
                 # ⛔️ Step 1: GATE STEP To avoid unusefull calls (Skip if score < 3)
-                
                 try:
                     gate_response = self.error_handler.invoke_with_retry(llm=self.llm, prompt= str(gate_prompt + s + self.end_prompt))
                     log = gate_response.usage_metadata
@@ -91,10 +90,8 @@ class Annotator:
 
                 if gate_score < 3:
                     print(f"gate score too low {gate_score}, skipping segment \n")
-                    print(f" \n Segmento skipped: {s} \n\n")
+                    print(f" \n Segmento skipped: {s[:100]}... \n\n")
                     continue  # Skip segment if gate score is below threshold
-
-                texts.append(s)
 
                 # ✅ Step 2: Run segment-level annotations (only if gate passed)
                 for prompt_name, prompt_template in annotation_prompts.items():
@@ -112,10 +109,29 @@ class Annotator:
                     except Exception as e:
                         print(f"Errore nella annotazione con prompt {prompt_name}: {e}")
                         traceback.print_exc()
-                        cumulative_annotations.append({prompt_name: []})
+                        # Anche in caso di errore, aggiungiamo una lista vuota per la categoria per non bloccare
+                        cumulative_annotations.append({prompt_name: []}) 
 
-                cumulative_annotations = self.flatten_dict_list(cumulative_annotations)
-                signals.append(cumulative_annotations)
+                # Appiattisci le annotazioni accumulate per il segmento corrente
+                cumulative_annotations_flat = self.flatten_dict_list(cumulative_annotations)
+
+                # Verifica se cumulative_annotations_flat contiene solo array vuoti Considera un segmento "vuoto" se tutte le liste di entità sono vuote
+                # Esempio: {"PERSON": [], "ORG": []}
+                is_empty_annotation = True
+                for key, value in cumulative_annotations_flat.items():
+                    if isinstance(value, list) and len(value) > 0:
+                        #print(f"Trovata annotazione non vuota len(value) > 0 per la chiave {key}: {value}")
+                        #print(value) # Span+intensity detected!
+                        is_empty_annotation = False
+                        break # Trovato almeno un'entità, quindi non è vuoto
+
+                if is_empty_annotation:
+                    print(f"Annotazioni vuote per il segmento dopo il gate, saltando il segmento: {s[:100]}...")
+                    continue # Salta l'aggiunta di questo segmento e delle sue annotazioni
+
+                # Se non è vuoto, allora lo aggiungiamo
+                texts.append(s)
+                signals.append(cumulative_annotations_flat)
 
         self.logger(total_input_tokens,total_output_tokens)
         
@@ -171,7 +187,6 @@ class Annotator:
 
         if current_chunk:
             chunks.append(" ".join(current_chunk))
-
 
         return chunks
 

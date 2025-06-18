@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 
-class GeminiCostLogger:
+class CostLogger:
     INPUT_COST_PER_MILLION = 0.10     # Gemini Flash input
     OUTPUT_COST_PER_MILLION = 0.60    # Gemini Flash output
 

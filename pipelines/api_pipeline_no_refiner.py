@@ -10,7 +10,7 @@ from nodes.OutputCorrection import OutputCorrection
 from nodes.SpanFormat import SpanFormat
 from nodes.StreamWriter import StreamWriter
 
-from utils.GeminiCostAnalyze import GeminiCostAnalyze
+from utils.CostAnalyze import CostAnalyze
 import traceback
 import json
 import os
@@ -37,7 +37,7 @@ def run_pipeline(input_path, output_path, checkpoint_path, api_llm, prompts, llm
     correction = OutputCorrection(similarity_threshold=79)
     span_format = SpanFormat()
     writer = StreamWriter(output_file=output_path)
-    cost_analyzer = GeminiCostAnalyze()
+    cost_analyzer = CostAnalyze()
     graph = create_pipeline(annotator, correction, span_format, writer)
 
     with open(input_path, "r", encoding="utf-8") as f:
@@ -52,7 +52,7 @@ def run_pipeline(input_path, output_path, checkpoint_path, api_llm, prompts, llm
     for idx in range(checkpoint, len(dataset)):
         item = dataset[idx]
         
-        time.sleep(61) # <-- Attesa di 61 secondi per evitare rate limit
+        ####### START CUSTOM LOGIC #######
         
         if item.get('language') not in ['Italian', 'English']:
             continue
@@ -73,6 +73,7 @@ def run_pipeline(input_path, output_path, checkpoint_path, api_llm, prompts, llm
             traceback.print_exc()  # <-- stack trace completo
             break
         
+        ####### END CUSTOM LOGIC #######
         
         
         print(f"Salvato: {idx + 1}/{len(dataset)}")
